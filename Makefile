@@ -1,9 +1,8 @@
 # Build
 CC=riscv64-elf-gcc
 CFLAGS=-ffreestanding -nostartfiles -nostdlib -nodefaultlibs
-CFLAGS+=-g -Wl,--gc-sections
+CFLAGS+=-g -Wl,--gc-sections -mcmodel=medany
 RUNTIME=src/asm/crt0.s
-ENTRYPOINT=src/kmain.c
 LINKER_SCRIPT=src/lds/riscv64-virt.ld
 KERNEL_IMAGE=kmain
 
@@ -17,11 +16,14 @@ RUN+=-bios none -kernel $(KERNEL_IMAGE)
 # QEMU (debug)
 GDB_PORT=1234
 
-all: kmain
+all: uart kmain
 	$(CC) $(CFLAGS) $(RUNTIME) *.o -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
+uart:
+	$(CC) -c src/uart/uart.c $(CFLAGS) -o uart.o
+
 kmain:
-	$(CC) -c $(CFLAGS) $(ENTRYPOINT) -o kmain.o
+	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o
 
 run: all
 	$(RUN)

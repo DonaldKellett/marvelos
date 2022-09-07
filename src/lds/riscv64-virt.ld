@@ -6,9 +6,10 @@
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv",
 	      "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
-MEMORY{
-  /* qemu-system-riscv64 virt machine */
-  RAM (rwx)       : ORIGIN = 0x80000000, LENGTH = 128M
+MEMORY
+{
+   /* qemu-system-risc64 virt machine */
+   RAM (rwx)  : ORIGIN = 0x80000000, LENGTH = 128M 
 }
 ENTRY(_start)
 SEARCH_DIR("=/home/dsleung/opt/cross/riscv64-elf/lib"); SEARCH_DIR("=/usr/local/lib"); SEARCH_DIR("=/lib"); SEARCH_DIR("=/usr/lib");

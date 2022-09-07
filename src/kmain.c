@@ -1,7 +1,10 @@
+#include "uart/uart.h"
+
 void kmain(void) {
-  volatile int a = 4;
-  volatile int b = 12;
-  while (1) {
-    volatile int c = a + b;
-  }
+  uart_init(UART_ADDR);
+
+  kputs("UART initialized successfully");
+  kputs("Hello RISC-V World!");
+  kputs("Hello OSDev World!");
+  kputs("We are in M-mode!");
 }
