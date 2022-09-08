@@ -2,16 +2,6 @@
 #include <stdint.h>
 #include "uart.h"
 
-static void mmio_write(size_t address, size_t offset, uint8_t value) {
-  volatile uint8_t *reg = (uint8_t *)address;
-  reg[offset] = value;
-}
-
-static uint8_t mmio_read(size_t address, size_t offset) {
-  volatile uint8_t *reg = (uint8_t *)address;
-  return reg[offset];
-}
-
 /*
  * Initialize NS16550A UART
  */

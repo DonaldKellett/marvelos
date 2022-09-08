@@ -16,11 +16,14 @@ RUN+=-bios none -kernel $(KERNEL_IMAGE)
 # QEMU (debug)
 GDB_PORT=1234
 
-all: uart kmain
-	$(CC) $(CFLAGS) $(RUNTIME) *.o -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
+all: uart syscon kmain
+	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
 uart:
 	$(CC) -c src/uart/uart.c $(CFLAGS) -o uart.o
+
+syscon:
+	$(CC) -c src/syscon/syscon.c $(CFLAGS) -o syscon.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o
