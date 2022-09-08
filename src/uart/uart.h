@@ -9,5 +9,6 @@
 void uart_init(size_t);
 int kputchar(int);
 int kputs(const char *);
+void kprintf(const char *format, ...);
 
 #endif

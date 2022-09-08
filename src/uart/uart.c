@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include "uart.h"
 
 /*
@@ -55,4 +56,72 @@ int kputs(const char *str) {
   }
   kputchar((int)'\n');
   return 0;
+}
+
+// Limited version of vprintf() which only supports the following specifiers:
+//
+// - d/i: Signed decimal integer
+// - u: Unsigned decimal integer
+// - o: Unsigned octal
+// - x: Unsigned hexadecimal integer
+// - X: Unsigned hexadecimal integer (uppercase)
+// - c: Character
+// - s: String of characters
+// - p: Pointer address
+// - %: Literal '%'
+//
+// None of the sub-specifiers are supported for the sake of simplicity.
+// The `n` specifier is not supported since that is a major source of
+// security vulnerabilities. None of the floating-point specifiers are
+// supported since floating point operations don't make sense in kernel
+// space
+//
+// Anyway, this subset should suffice for printf debugging
+static void kvprintf(const char *format, va_list arg) {
+  while (*format) {
+    if (*format == '%') {
+      ++format;
+      if (!*format)
+	return;
+      switch (*format) {
+      case 'd':
+      case 'i':
+	// TODO
+	break;
+      case 'u':
+	// TODO
+	break;
+      case 'o':
+	// TODO
+	break;
+      case 'x':
+	// TODO
+	break;
+      case 'X':
+	// TODO
+	break;
+      case 'c':
+	kputchar(va_arg(arg, int));
+	break;
+      case 's':
+	// TODO
+	break;
+      case 'p':
+	// TODO
+	break;
+      case '%':
+	kputchar('%');
+	break;
+      }
+    } else
+      kputchar(*format);
+    ++format;
+  }
+}
+
+void kprintf(const char *format, ...) {
+  va_list arg;
+  va_start(arg, format);
+  kvprintf(format, arg);
+  va_end(arg);
 }
