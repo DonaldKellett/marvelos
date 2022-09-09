@@ -1,7 +1,11 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <limits.h>
 #include "uart.h"
+#include "../common/common.h"
+
+#define to_hex_digit(n) ('0' + (n) + ((n) < 10 ? 0 : 'a' - '0' - 10))
 
 /*
  * Initialize NS16550A UART
@@ -49,11 +53,15 @@ int kputchar(int character) {
   return character;
 }
 
-int kputs(const char *str) {
+static void kprint(const char *str) {
   while (*str) {
     kputchar((int)*str);
     ++str;
   }
+}
+
+int kputs(const char *str) {
+  kprint(str);
   kputchar((int)'\n');
   return 0;
 }
@@ -86,32 +94,122 @@ static void kvprintf(const char *format, va_list arg) {
       switch (*format) {
       case 'd':
       case 'i':
-	// TODO
+	{
+	  int n = va_arg(arg, int);
+	  if (n == INT_MIN) {
+	    kprint("-2147483648");
+	    break;
+	  }
+	  if (n < 0) {
+	    kputchar('-');
+	    n = ~n + 1;
+	  }
+	  char lsh = '0' + n % 10;
+	  n /= 10;
+	  char buf[9];
+	  char *p_buf = buf;
+	  while (n) {
+            *p_buf++ = '0' + n % 10;
+	    n /= 10;
+	  }
+	  while (p_buf != buf)
+	    kputchar(*--p_buf);
+	  kputchar(lsh);
+	}
 	break;
       case 'u':
-	// TODO
+        {
+	  unsigned n = va_arg(arg, unsigned);
+	  char lsh = '0' + n % 10;
+	  n /= 10;
+	  char buf[9];
+	  char *p_buf = buf;
+	  while (n) {
+            *p_buf++ = '0' + n % 10;
+	    n /= 10;
+	  }
+	  while (p_buf != buf)
+	    kputchar(*--p_buf);
+	  kputchar(lsh);
+	}
 	break;
       case 'o':
-	// TODO
+        {
+	  unsigned n = va_arg(arg, unsigned);
+	  char lsh = '0' + n % 8;
+	  n /= 8;
+	  char buf[10];
+	  char *p_buf = buf;
+	  while (n) {
+            *p_buf++ = '0' + n % 8;
+	    n /= 8;
+	  }
+	  while (p_buf != buf)
+	    kputchar(*--p_buf);
+	  kputchar(lsh);
+	}
 	break;
       case 'x':
-	// TODO
+        {
+	  unsigned n = va_arg(arg, unsigned);
+	  char lsh = to_hex_digit(n % 16);
+	  n /= 16;
+	  char buf[7];
+	  char *p_buf = buf;
+	  while (n) {
+            *p_buf++ = to_hex_digit(n % 16);
+	    n /= 16;
+	  }
+	  while (p_buf != buf)
+	    kputchar(*--p_buf);
+	  kputchar(lsh);
+	}
 	break;
       case 'X':
-	// TODO
+        {
+	  unsigned n = va_arg(arg, unsigned);
+	  char lsh = to_hex_digit(n % 16);
+	  n /= 16;
+	  char buf[7];
+	  char *p_buf = buf;
+	  while (n) {
+            *p_buf++ = to_hex_digit(n % 16);
+	    n /= 16;
+	  }
+	  while (p_buf != buf)
+	    kputchar(toupper(*--p_buf));
+	  kputchar(toupper(lsh));
+	}
 	break;
       case 'c':
 	kputchar(va_arg(arg, int));
 	break;
       case 's':
-	// TODO
+	kprint(va_arg(arg, char *));
 	break;
       case 'p':
-	// TODO
+	{
+          kprint("0x");
+	  size_t ptr = va_arg(arg, size_t);
+	  char lsh = to_hex_digit(ptr % 16);
+	  ptr /= 16;
+	  char buf[15];
+	  char *p_buf = buf;
+	  while (ptr) {
+            *p_buf++ = to_hex_digit(ptr % 16);
+	    ptr /= 16;
+	  }
+	  while (p_buf != buf)
+	    kputchar(*--p_buf);
+	  kputchar(lsh);
+	}
 	break;
       case '%':
 	kputchar('%');
 	break;
+      default:
+	kputchar('%');
+	kputchar(*format);
       }
     } else
       kputchar(*format);
