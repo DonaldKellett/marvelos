@@ -85,7 +85,7 @@ int kputs(const char *str) {
 // space
 //
 // Anyway, this subset should suffice for printf debugging
-static void kvprintf(const char *format, va_list arg) {
+void kvprintf(const char *format, va_list arg) {
   while (*format) {
     if (*format == '%') {
       ++format;
