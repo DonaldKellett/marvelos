@@ -2,13 +2,14 @@
 #include "syscon/syscon.h"
 #include "common/common.h"
 
+#define ARCH "RISC-V"
+#define MODE 'M'
+
 void kmain(void) {
   uart_init(UART_ADDR);
 
-  panic("Oopsie - fatal error %p occurred\n"
-    "Unrecoverable error; aborting ...",
-    (size_t)0xdeadbeef);
+  kprintf("Hello %s World!\n", ARCH);
+  kprintf("We are in %c-mode!\n", MODE);
 
-  // This should be unreachable
   poweroff();
 }

@@ -23,29 +23,25 @@ void uart_init(size_t base_addr) {
   // Enable receiver buffer interrupts (IER[0])
   ptr[1] = 0b1;
 
+  // For a real UART, we need to compute and set the baud rate
+  // But since this is an emulated UART, we don't need to do anything
+  //
   // Assuming clock rate of 22.729 MHz, set signaling rate to 2400 baud
   // divisor = ceil(CLOCK_HZ / (16 * BAUD_RATE))
   //         = ceil(22729000 / (16 * 2400))
   //         = 592
-  uint16_t divisor = 592;
-  uint8_t divisor_least = divisor & 0xFF;
-  uint8_t divisor_most = divisor >> 8;
-  ptr[3] = LCR | 0x80;
-  ptr[0] = divisor_least;
-  ptr[1] = divisor_most;
-  ptr[3] = LCR;
-}
-
-static uint8_t uart_get(size_t base_addr) {
-  volatile uint8_t *ptr = (uint8_t *)base_addr;
-
-  // LSR[0] is data ready (DR)
-  return (ptr[5] & 0b1) && ptr[0] || 0;
+  //
+  // uint16_t divisor = 592;
+  // uint8_t divisor_least = divisor & 0xFF;
+  // uint8_t divisor_most = divisor >> 8;
+  // ptr[3] = LCR | 0x80;
+  // ptr[0] = divisor_least;
+  // ptr[1] = divisor_most;
+  // ptr[3] = LCR;
 }
 
 static void uart_put(size_t base_addr, uint8_t c) {
-  volatile uint8_t *ptr = (uint8_t *)base_addr;
-  ptr[0] = c;
+  *(uint8_t *)base_addr = c;
 }
 
 int kputchar(int character) {
