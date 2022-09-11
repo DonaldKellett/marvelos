@@ -17,7 +17,27 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x10000)); . = SEGMENT_START("text-segment", 0x10000) + SIZEOF_HEADERS;
-  PROVIDE(__stack_top = ORIGIN(RAM) + LENGTH(RAM));
+  /*
+   * Convenience symbols for start (inclusive) and
+   * end (exclusive) of memory
+   */
+  PROVIDE(__memory_start = ORIGIN(RAM));
+  PROVIDE(__memory_end = __memory_start + LENGTH(RAM));
+  /*
+   * Allocate 0x80000 bytes (= 512KiB) to our stack
+   * The stack grows downwards, starting from
+   * __memory_start + 0x80000 (exclusive) down to
+   * __memory_start (inclusive)
+   */
+  PROVIDE(__stack_top = ORIGIN(RAM) + 0x80000);
+  /*
+   * The rest is for our heap, starting from __heap_bottom
+   * (= __stack_top) inclusive, up to __memory_end
+   * exclusive
+   * Its size is thus __memory_end - __heap_bottom bytes
+   */
+  PROVIDE(__heap_bottom = __stack_top);
+  PROVIDE(__heap_size = __memory_end - __heap_bottom);
   .interp         : { *(.interp) }
   .note.gnu.build-id  : { *(.note.gnu.build-id) }
   .hash           : { *(.hash) }
