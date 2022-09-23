@@ -14,9 +14,6 @@ MEM=128M
 RUN=$(QEMU) -nographic -machine $(MACH) -m $(MEM)
 RUN+=-bios none -kernel $(KERNEL_IMAGE)
 
-# QEMU (debug)
-GDB_PORT=1234
-
 all: uart syscon common mm kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
@@ -39,7 +36,7 @@ run: all
 	$(RUN)
 
 debug: all
-	$(RUN) -gdb tcp::$(GDB_PORT) -S
+	$(RUN) -s -S
 
 clean:
 	rm -vf *.o
