@@ -3,8 +3,8 @@
 #include "../common/common.h"
 #include "../uart/uart.h"
 
-extern char __heap_bottom;
-extern char __heap_size;
+extern char __heap_start;
+extern char __heap_end;
 
 static size_t HEAP_BOTTOM = 0;
 static size_t HEAP_SIZE = 0;
@@ -24,8 +24,8 @@ static size_t page_address_from_id(size_t id) {
 
 // Initialize the heap for page allocation
 void mm_init(void) {
-  HEAP_BOTTOM = (size_t)&__heap_bottom;
-  HEAP_SIZE = (size_t)&__heap_size;
+  HEAP_BOTTOM = (size_t)&__heap_start;
+  HEAP_SIZE = (size_t)&__heap_end - (size_t)&__heap_start;
   NUM_PAGES = HEAP_SIZE / PAGE_SIZE;
   struct page *ptr = (struct page *)HEAP_BOTTOM;
   // Explicitly mark all pages as free

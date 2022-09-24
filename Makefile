@@ -1,7 +1,7 @@
 # Build
 CC=riscv64-elf-gcc
 CFLAGS=-ffreestanding -nostartfiles -nostdlib -nodefaultlibs
-CFLAGS+=-g -Wl,--gc-sections -Wl,--no-warn-rwx-segments
+CFLAGS+=-g -Wl,--gc-sections
 CFLAGS+=-mcmodel=medany
 RUNTIME=src/asm/crt0.s
 LINKER_SCRIPT=src/lds/riscv64-virt.ld
