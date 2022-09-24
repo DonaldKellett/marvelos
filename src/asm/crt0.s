@@ -1,3 +1,8 @@
+# Disable generation of compressed instructions
+# This is to avoid complications when setting values
+# of CSRs such as mtvec and stvec which require alignment
+.option norvc
+
 .section .init, "ax"
 .global _start
 _start:
