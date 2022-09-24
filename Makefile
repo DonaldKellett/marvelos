@@ -1,8 +1,7 @@
 # Build
 CC=riscv64-elf-gcc
 CFLAGS=-ffreestanding -nostartfiles -nostdlib -nodefaultlibs
-CFLAGS+=-g -Wl,--gc-sections
-CFLAGS+=-mcmodel=medany
+CFLAGS+=-g -Wl,--gc-sections -mcmodel=medany
 RUNTIME=src/asm/crt0.s
 LINKER_SCRIPT=src/lds/riscv64-virt.ld
 KERNEL_IMAGE=kmain
@@ -10,8 +9,7 @@ KERNEL_IMAGE=kmain
 # QEMU
 QEMU=qemu-system-riscv64
 MACH=virt
-MEM=128M
-RUN=$(QEMU) -nographic -machine $(MACH) -m $(MEM)
+RUN=$(QEMU) -nographic -machine $(MACH)
 RUN+=-bios none -kernel $(KERNEL_IMAGE)
 
 all: uart syscon common mm kmain
