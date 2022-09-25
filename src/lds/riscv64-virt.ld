@@ -19,6 +19,9 @@ SECTIONS {
     *(.init);
     *(.text);
   }
+  .rodata : ALIGN(4K) {
+    *(.rodata);
+  }
   .data : ALIGN(4K) {
     *(.data);
   }

@@ -3,12 +3,20 @@
 #include "common/common.h"
 #include "mm/page.h"
 
-#define ARCH "RISC-V"
-#define MODE 'M'
+uint64_t kinit(void) {
+  uart_init(UART_ADDR);
+  kputs("UART initialized");
+  kputs("We are in M-mode!");
+
+  mm_init();
+  kputs("Page-grained allocator initialized");
+
+  kputs("Exiting M-mode\n");
+  return 0;
+}
 
 void kmain(void) {
-  uart_init(UART_ADDR);
-  mm_init();
+  kputs("We are in S-mode!");
 
   print_page_allocations();
 
@@ -49,6 +57,7 @@ void kmain(void) {
 
   dealloc_pages(p1);
   kputs("Deallocated p1");
+
   print_page_allocations();
 
   dealloc_pages(p2);
