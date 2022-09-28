@@ -5,8 +5,6 @@
 #include "uart.h"
 #include "../common/common.h"
 
-#define to_hex_digit(n) ('0' + (n) + ((n) < 10 ? 0 : 'a' - '0' - 10))
-
 /*
  * Initialize NS16550A UART
  */
@@ -148,12 +146,12 @@ void kvprintf(const char *format, va_list arg) {
       case 'x':
         {
 	  unsigned n = va_arg(arg, unsigned);
-	  char lsh = to_hex_digit(n % 16);
+	  char lsh = TO_HEX_DIGIT(n % 16);
 	  n /= 16;
 	  char buf[7];
 	  char *p_buf = buf;
 	  while (n) {
-            *p_buf++ = to_hex_digit(n % 16);
+            *p_buf++ = TO_HEX_DIGIT(n % 16);
 	    n /= 16;
 	  }
 	  while (p_buf != buf)
@@ -164,12 +162,12 @@ void kvprintf(const char *format, va_list arg) {
       case 'X':
         {
 	  unsigned n = va_arg(arg, unsigned);
-	  char lsh = to_hex_digit(n % 16);
+	  char lsh = TO_HEX_DIGIT(n % 16);
 	  n /= 16;
 	  char buf[7];
 	  char *p_buf = buf;
 	  while (n) {
-            *p_buf++ = to_hex_digit(n % 16);
+            *p_buf++ = TO_HEX_DIGIT(n % 16);
 	    n /= 16;
 	  }
 	  while (p_buf != buf)
@@ -187,12 +185,12 @@ void kvprintf(const char *format, va_list arg) {
 	{
           kprint("0x");
 	  size_t ptr = va_arg(arg, size_t);
-	  char lsh = to_hex_digit(ptr % 16);
+	  char lsh = TO_HEX_DIGIT(ptr % 16);
 	  ptr /= 16;
 	  char buf[15];
 	  char *p_buf = buf;
 	  while (ptr) {
-            *p_buf++ = to_hex_digit(ptr % 16);
+            *p_buf++ = TO_HEX_DIGIT(ptr % 16);
 	    ptr /= 16;
 	  }
 	  while (p_buf != buf)

@@ -39,8 +39,8 @@ void mm_init(void) {
   size_t error = ALLOC_END - (HEAP_BOTTOM + HEAP_SIZE);
   NUM_PAGES -= error / PAGE_SIZE;
   ALLOC_END = HEAP_BOTTOM + HEAP_SIZE;
-  if (page_address_from_id(NUM_PAGES) > ALLOC_END)
-    panic("mm_init(): Heap extends beyond our available memory region!");
+  ASSERT(page_address_from_id(NUM_PAGES) <= ALLOC_END,
+    "mm_init(): Heap extends beyond our available memory region!");
 }
 
 // Attempts to allocate the specified number of contiguous free pages
@@ -48,8 +48,7 @@ void mm_init(void) {
 // All allocated pages are automatically zeroed if successful
 // Otherwise, return NULL
 void *alloc_pages(size_t n) {
-  if (!n)
-    panic("alloc_pages(): attempted to allocate 0 pages");
+  ASSERT(n != 0, "alloc_pages(): attempted to allocate 0 pages");
   struct page *ptr = (struct page *)HEAP_BOTTOM;
   for (size_t i = 0; i + n < NUM_PAGES + 1; ++i) {
     // Check that the next `n` pages are all free
@@ -90,16 +89,16 @@ void *alloc_page(void) {
 // Deallocate a set of contiguous pages from a pointer returned
 // from alloc_pages()
 void dealloc_pages(void *ptr) {
-  if (!ptr)
-    panic("dealloc_pages(): attempted to free NULL pointer");
+  ASSERT(ptr != NULL,
+    "dealloc_pages(): attempted to free NULL pointer");
 
   // Fetch corresponding page struct for given page address
   size_t addr = HEAP_BOTTOM + ((size_t)ptr - ALLOC_START) / PAGE_SIZE;
-  if (addr < HEAP_BOTTOM || addr >= HEAP_BOTTOM + HEAP_SIZE)
-    panic("dealloc_pages(): Variable addr = %p outside heap range [%p, %p)",
-      addr,
-      HEAP_BOTTOM,
-      HEAP_BOTTOM + HEAP_SIZE);
+  ASSERT(HEAP_BOTTOM <= addr && addr < HEAP_BOTTOM + HEAP_SIZE,
+    "dealloc_pages(): Variable addr = %p outside heap range [%p, %p)",
+    addr,
+    HEAP_BOTTOM,
+    HEAP_BOTTOM + HEAP_SIZE);
 
   // Keep clearing pages until we hit the last page
   struct page *p = (struct page *)addr;
@@ -107,9 +106,9 @@ void dealloc_pages(void *ptr) {
     p->flags = 0;
     ++p;
   }
-  if (!(p->flags & PAGE_LAST))
-    panic("dealloc_pages(): Found a free page before reaching the "
-      "last page; possible double-free error occurred");
+  ASSERT(p->flags & PAGE_LAST,
+    "dealloc_pages(): Found a free page before reaching the "
+    "last page; possible double-free error occurred");
 
   // Clear the flags on the last page
   p->flags = 0;
@@ -136,10 +135,11 @@ void print_page_allocations(void) {
       ++i;
       while (i < NUM_PAGES && (ptr[i].flags & PAGE_TAKEN) && !(ptr[i].flags & PAGE_LAST))
         ++i;
-      if (i >= NUM_PAGES)
-	panic("print_page_allocations(): i >= NUM_PAGES - reached end of metadata before finding the last page");
-      if (!(ptr[i].flags & PAGE_TAKEN))
-	panic("print_page_allocations(): Found free page before reaching the last page - possible double-free error");
+      ASSERT(i < NUM_PAGES,
+        "print_page_allocations(): reached end of metadata before finding the last page");
+      ASSERT(ptr[i].flags & PAGE_TAKEN,
+        "print_page_allocations(): found free page before reaching the "
+	"last page - possible double-free error");
       size_t end_addr = page_address_from_id(i + 1);
       size_t pages = (end_addr - start_addr) / PAGE_SIZE;
       kprintf("[%p, %p): %d pages\n", start_addr, end_addr, pages);
