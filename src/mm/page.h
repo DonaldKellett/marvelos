@@ -9,7 +9,7 @@
 #define PAGE_SIZE (1 << 12)
 
 struct page {
-  uint8_t flags;
+	uint8_t flags;
 };
 
 void mm_init(void);

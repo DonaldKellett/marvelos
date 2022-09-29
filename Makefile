@@ -36,6 +36,13 @@ run: all
 debug: all
 	$(RUN) -s -S
 
+format:
+	find . -name '*.h' -exec indent -linux '{}' \;
+	find . -name '*.c' -exec indent -linux '{}' \;
+	find . -name '*.h' -exec sed -i -r 's/(0) (b[01]+)/\1\2/g' '{}' \;
+	find . -name '*.c' -exec sed -i -r 's/(0) (b[01]+)/\1\2/g' '{}' \;
+
 clean:
 	rm -vf *.o
 	rm -vf $(KERNEL_IMAGE)
+	find . -name '*~' -exec rm -vf '{}' \;
