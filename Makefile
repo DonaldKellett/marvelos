@@ -12,6 +12,9 @@ MACH=virt
 RUN=$(QEMU) -nographic -machine $(MACH)
 RUN+=-bios none -kernel $(KERNEL_IMAGE)
 
+# Format
+INDENT_FLAGS=-orig -npsl -brf
+
 all: uart syscon common mm kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
@@ -37,10 +40,11 @@ debug: all
 	$(RUN) -s -S
 
 format:
-	find . -name '*.h' -exec indent -linux '{}' \;
-	find . -name '*.c' -exec indent -linux '{}' \;
+	find . -name '*.h' -exec indent $(INDENT_FLAGS) '{}' \;
+	find . -name '*.c' -exec indent $(INDENT_FLAGS) '{}' \;
 	find . -name '*.h' -exec sed -i -r 's/(0) (b[01]+)/\1\2/g' '{}' \;
 	find . -name '*.c' -exec sed -i -r 's/(0) (b[01]+)/\1\2/g' '{}' \;
+	echo "You should now \`make run\` to confirm the project still builds and runs correctly"
 
 clean:
 	rm -vf *.o
