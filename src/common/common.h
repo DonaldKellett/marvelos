@@ -16,6 +16,6 @@
       __VA_OPT__(,) __VA_ARGS__);\
 })
 
-int             toupper(int);
+int toupper(int);
 
 #endif

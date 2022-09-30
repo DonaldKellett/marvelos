@@ -13,7 +13,7 @@ RUN=$(QEMU) -nographic -machine $(MACH)
 RUN+=-bios none -kernel $(KERNEL_IMAGE)
 
 # Format
-INDENT_FLAGS=-orig -npsl -brf
+INDENT_FLAGS=-linux -brf -i2
 
 all: uart syscon common mm kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)

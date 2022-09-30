@@ -9,13 +9,13 @@
 #define PAGE_SIZE (1 << 12)
 
 struct page {
-    uint8_t         flags;
+  uint8_t flags;
 };
 
-void            mm_init(void);
-void           *alloc_pages(size_t);
-void           *alloc_page(void);
-void            dealloc_pages(void *);
-void            print_page_allocations(void);
+void mm_init(void);
+void *alloc_pages(size_t);
+void *alloc_page(void);
+void dealloc_pages(void *);
+void print_page_allocations(void);
 
 #endif
