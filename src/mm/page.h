@@ -6,7 +6,8 @@
 
 #define PAGE_TAKEN (1 << 0)
 #define PAGE_LAST (1 << 1)
-#define PAGE_SIZE (1 << 12)
+#define PAGE_ORDER 12
+#define PAGE_SIZE (1 << PAGE_ORDER)
 
 struct page {
   uint8_t flags;

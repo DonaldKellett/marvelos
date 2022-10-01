@@ -12,9 +12,10 @@ static size_t NUM_PAGES = 0;
 static size_t ALLOC_START = 0;
 static size_t ALLOC_END = 0;
 
-// Align pointer to nearest PAGE_SIZE, rounded up
-static size_t align_to_page(size_t n) {
-  return n / PAGE_SIZE * PAGE_SIZE + (n % PAGE_SIZE ? PAGE_SIZE : 0);
+// Align pointer to nearest 2^order bytes, rounded up
+static size_t align_val(size_t val, size_t order) {
+  size_t o = (1ull << order) - 1;
+  return (val + o) & ~o;
 }
 
 // Get page address from page id
@@ -31,7 +32,8 @@ void mm_init(void) {
   // Explicitly mark all pages as free
   for (size_t i = 0; i < NUM_PAGES; ++i)
     ptr[i].flags = 0;
-  ALLOC_START = align_to_page(HEAP_BOTTOM + NUM_PAGES * sizeof(struct page));
+  ALLOC_START =
+      align_val(HEAP_BOTTOM + NUM_PAGES * sizeof(struct page), PAGE_ORDER);
   ALLOC_END = page_address_from_id(NUM_PAGES);
 
   // Re-compute ALLOC_END and NUM_PAGES as the heap should not
