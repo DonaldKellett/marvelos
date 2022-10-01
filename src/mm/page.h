@@ -13,7 +13,9 @@ struct page {
   uint8_t flags;
 };
 
-void mm_init(void);
+size_t align_val(size_t, size_t);
+
+void page_init(void);
 void *alloc_pages(size_t);
 void *alloc_page(void);
 void dealloc_pages(void *);

@@ -30,6 +30,7 @@ common:
 mm:
 	$(CC) -c src/mm/page.c $(CFLAGS) -o page.o
 	$(CC) -c src/mm/sv39.c $(CFLAGS) -o sv39.o
+	$(CC) -c src/mm/kmem.c $(CFLAGS) -o kmem.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o

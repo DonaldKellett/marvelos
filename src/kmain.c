@@ -8,7 +8,7 @@ uint64_t kinit(void) {
   kputs("UART initialized");
   kputs("We are in M-mode!");
 
-  mm_init();
+  page_init();
   kputs("Page-grained allocator initialized");
 
   kputs("Exiting M-mode\n");

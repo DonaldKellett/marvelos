@@ -13,7 +13,7 @@ static size_t ALLOC_START = 0;
 static size_t ALLOC_END = 0;
 
 // Align pointer to nearest 2^order bytes, rounded up
-static size_t align_val(size_t val, size_t order) {
+size_t align_val(size_t val, size_t order) {
   size_t o = (1ull << order) - 1;
   return (val + o) & ~o;
 }
@@ -24,7 +24,7 @@ static size_t page_address_from_id(size_t id) {
 }
 
 // Initialize the heap for page allocation
-void mm_init(void) {
+void page_init(void) {
   HEAP_BOTTOM = HEAP_START;
   HEAP_SIZE = HEAP_END - HEAP_START;
   NUM_PAGES = HEAP_SIZE / PAGE_SIZE;
@@ -42,7 +42,7 @@ void mm_init(void) {
   NUM_PAGES -= error / PAGE_SIZE;
   ALLOC_END = HEAP_BOTTOM + HEAP_SIZE;
   ASSERT(page_address_from_id(NUM_PAGES) <= ALLOC_END,
-	 "mm_init(): Heap extends beyond our available memory region!");
+	 "page_init(): Heap extends beyond our available memory region!");
 }
 
 // Attempts to allocate the specified number of contiguous free pages
