@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+// MODE=8 encodes Sv39 paging in SATP register
+#define MODE_SV39 8
+
 // Page table entry (PTE) bits
 #define PTE_NONE 0
 #define PTE_VALID (1 << 0)

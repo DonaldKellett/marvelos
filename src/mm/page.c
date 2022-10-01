@@ -3,14 +3,18 @@
 #include "../common/common.h"
 #include "../uart/uart.h"
 
-extern size_t HEAP_START;
-extern size_t HEAP_END;
+extern const size_t HEAP_START;
+extern const size_t HEAP_SIZE;
+extern const size_t HEAP_END;
 
 static size_t HEAP_BOTTOM = 0;
-static size_t HEAP_SIZE = 0;
 static size_t NUM_PAGES = 0;
 static size_t ALLOC_START = 0;
 static size_t ALLOC_END = 0;
+
+size_t get_num_pages(void) {
+  return NUM_PAGES;
+}
 
 // Align pointer to nearest 2^order bytes, rounded up
 size_t align_val(size_t val, size_t order) {
@@ -26,7 +30,6 @@ static size_t page_address_from_id(size_t id) {
 // Initialize the heap for page allocation
 void page_init(void) {
   HEAP_BOTTOM = HEAP_START;
-  HEAP_SIZE = HEAP_END - HEAP_START;
   NUM_PAGES = HEAP_SIZE / PAGE_SIZE;
   struct page *ptr = (struct page *)HEAP_BOTTOM;
   // Explicitly mark all pages as free

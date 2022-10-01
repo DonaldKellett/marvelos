@@ -13,6 +13,8 @@ struct page {
   uint8_t flags;
 };
 
+size_t get_num_pages(void);
+
 size_t align_val(size_t, size_t);
 
 void page_init(void);
