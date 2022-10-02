@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include "kmem.h"
 #include "page.h"
 #include "../common/common.h"
@@ -70,6 +71,7 @@ static void coalesce(void) {
   size_t *head = KMEM_HEAD;
   size_t *tail = (size_t *)&((uint8_t *) KMEM_HEAD)[KMEM_ALLOC * PAGE_SIZE];
   while ((size_t)head < (size_t)tail) {
+    bool merged = false;
     // Get next block
     size_t *next = (size_t *)&((uint8_t *) head)[KMMD_GET_SIZE(head)];
     ASSERT(head != next,
@@ -77,10 +79,13 @@ static void coalesce(void) {
     if (next >= tail)
       // `head` was the last block - nothing to coalesce
       break;
-    else if (KMMD_IS_FREE(head) && KMMD_IS_FREE(next))
+    else if (KMMD_IS_FREE(head) && KMMD_IS_FREE(next)) {
       // Both adjacent blocks are free - merge into `head`
       KMMD_SET_SIZE(head, KMMD_GET_SIZE(head) + KMMD_GET_SIZE(next));
-    head = (size_t *)&((uint8_t *) head)[KMMD_GET_SIZE(head)];
+      merged = true;
+    }
+    if (!merged)
+      head = (size_t *)&((uint8_t *) head)[KMMD_GET_SIZE(head)];
   }
 }
 
@@ -94,7 +99,9 @@ void kfree(void *ptr) {
 }
 
 // Print the kmem table for debugging
-void print_table(void) {
+void kmem_print_table(void) {
+  kputchar('\n');
+  kprintf("KMEM ALLOCATION TABLE\n");
   size_t *head = KMEM_HEAD;
   size_t *tail = (size_t *)&((uint8_t *) KMEM_HEAD)[KMEM_ALLOC * PAGE_SIZE];
   while ((size_t)head < (size_t)tail) {
@@ -102,4 +109,5 @@ void print_table(void) {
 	    KMMD_IS_TAKEN(head));
     head = (size_t *)&((uint8_t *) head)[KMMD_GET_SIZE(head)];
   }
+  kputchar('\n');
 }

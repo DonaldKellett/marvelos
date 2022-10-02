@@ -27,7 +27,7 @@ extern const size_t HEAP_SIZE;
 extern size_t KERNEL_TABLE;
 
 const char HELLO[] =
-    "Hello World! This is a dynamically allocated string using the byte-grained allocator.\n";
+    "Hello World! This is a dynamically allocated string using the byte-grained allocator.";
 
 // Identity map range
 // Takes a contiguous allocation of memory and maps it using PAGE_SIZE
@@ -60,7 +60,7 @@ uint64_t kinit(void) {
   struct page_table *root = kmem_get_page_table();
   size_t kheap_head = (size_t)kmem_get_head();
   size_t total_pages = kmem_get_num_allocations();
-  kprintf("\n\n");
+  kprintf("\n");
   kprintf("INIT: [%p, %p)\n", INIT_START, INIT_END);
   kprintf("TEXT: [%p, %p)\n", TEXT_START, TEXT_END);
   kprintf("RODATA: [%p, %p)\n", RODATA_START, RODATA_END);
@@ -123,19 +123,33 @@ uint64_t kinit(void) {
 
 void kmain(void) {
   kputs("We are in S-mode!");
-  kputchar('\n');
+
+  kmem_print_table();
 
   char *hello = kcalloc(1 + sizeof(HELLO), sizeof(char));
+  ASSERT(hello != NULL,
+	 "kmain(): failed to allocate buffer for string `hello`");
   strcpy(hello, HELLO);
   kprintf("%s\n", hello);
-  kfree(hello);
+  strcpy(hello, "Extra test for strcpy()");
+  kprintf("%s\n", hello);
+
+  kmem_print_table();
 
   int *one_to_five = kmalloc(5 * sizeof(int));
+  ASSERT(one_to_five != NULL,
+	 "kmain(): failed to allocate buffer for int array `one_to_five`");
   for (int i = 0; i < 5; ++i)
     one_to_five[i] = i + 1;
   for (int i = 0; i < 5; ++i)
     kprintf("%d\n", one_to_five[i]);
+
+  kmem_print_table();
+
+  kfree(hello);
   kfree(one_to_five);
+
+  kmem_print_table();
 
   kprintf("Goodbye!\n");
 

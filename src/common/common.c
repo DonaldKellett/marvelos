@@ -12,5 +12,6 @@ char *strcpy(char *destination, const char *source) {
   char *tmp = destination;
   while (*source)
     *tmp++ = *source++;
+  *tmp = '\0';
   return destination;
 }
