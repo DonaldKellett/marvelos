@@ -4,6 +4,21 @@
 # constraints
 .option norvc
 
+# Common symbols
+.set NUM_GP_REGS, 32
+.set REG_SIZE, 8
+
+# Use alternative macro syntax (see GNU assembler docs for details)
+.altmacro
+
+# Common macros
+.macro save_gp i, basereg=t6
+  sd x\i, ((\i) * REG_SIZE)(\basereg)
+.endm
+.macro load_gp i, basereg=t6
+  ld x\i, ((\i) * REG_SIZE)(\basereg)
+.endm
+
 # Importation of linker symbols
 .section .rodata
 .global HEAP_START
@@ -72,10 +87,8 @@ _start:
   la t0, kinit
   csrw mepc, t0
 
-  # Machine trap vector
-  # Use our interrupt_handler for handling M-mode traps
-  la t0, interrupt_handler
-  csrw mtvec, t0
+  # Do not allow interrupts in M-mode
+  csrw mie, zero
 
   # Zero the BSS section
   la t0, __bss_start
@@ -107,33 +120,27 @@ prepare_s_mode:
   # Initialize CSRs for S-mode
 
   # Supervisor status
-  # SPP: supervisor's previous protection mode
-  # SPIE: supervisor's previous interrupt enable bit
-  # Supervisor's interrupt-enable bit sstatus[1] will
-  # be set to 1 after sret
-  #      SPP=1      SPIE=1
-  li t0, (1 << 8) | (1 << 5)
-  csrw sstatus, t0
+  # MPP: protection mode (MPP=01 means S-mode)
+  # MPIE: machine interrupt-enable
+  # SPIE: supervisor interrupt-enable
+  #      MPP=01         MPIE=1     SPIE=1
+  li t0, (0b01 << 11) | (1 << 7) | (1 << 5)
+  csrw mstatus, t0
 
-  # Supervisor exception program counter
-  # Set to kmain - this is where executing sret will jump to
+  # Set machine exception program counter to kmain
+  # This is where mret will jump to
   la t0, kmain
-  csrw sepc, t0
+  csrw mepc, t0
 
-  # Machine interrupt delegate
-  # Specifies which types of interrupts to delegate to S-mode
+  # Machine interrupt enable
+  # Specifies which types of interrupts to enable in M-mode
   #      external   timer      software
   li t0, (1 << 9) | (1 << 5) | (1 << 1)
-  csrw mideleg, t0
+  csrw mie, t0
   
-  # Supervisor interrupt enable
-  # Enable the same types of interrupts for S-mode
-  csrw sie, t0
-
-  # Supervisor trap vector
-  # Like mtvec, set to our interrupt_handler
+  # Set machine trap vector to our interrupt_handler
   la t0, interrupt_handler
-  csrw stvec, t0
+  csrw mtvec, t0
 
   # Use kinit return value as value of SATP register
   csrw satp, a0
@@ -158,15 +165,66 @@ prepare_s_mode:
   la ra, wait_for_interrupt
 
   # Now go to S-mode
-  sret
+  # mret goes to S-mode since we set MPP=01 in mstatus
+  mret
 
 # We're already done with everything - let's hang
 wait_for_interrupt:
   wfi
   j wait_for_interrupt
 
-# Interrupt handler (WIP)
+# Interrupt handler
 interrupt_handler:
-  csrr a0, mtval
-  wfi
-  j interrupt_handler
+  # Save all general purpose registers into kernel trap frame
+  # No need to save floating point registers since we haven't used them yet
+  # No need to save satp, trap_stack since we don't modify them
+  # No need to save hartid since that is always 0
+  # (we only have a single CPU core)
+  # This requires a bit of trickery to do correctly:
+  # 
+  # 0. mscratch has address of kernel trap frame - see kinit() for details
+  # 1. Atomically swap mscratch and t6 registers
+  #    Now t6 has address of kernel trap frame, and mscratch the
+  #    original value of t6
+  # 2. Now save registers x1-x30 into kernel trap frame, using
+  #    t6=x31 as base
+  #    No need to save zero=x0 since that is read-only zero
+  # 3. Move address of kernel trap frame to t5=x30 so we don't lose it
+  # 4. Move mscratch (= original value of t6) back into t6 and save that
+  # 5. Write address of kernel trap frame from t5 back into mscratch
+  csrrw t6, mscratch, t6
+  .set i, 1
+  .rept 30
+    save_gp %i
+    .set i, i + 1
+  .endr
+  mv t5, t6
+  csrr t6, mscratch
+  save_gp 31, t5
+  csrw mscratch, t5
+
+  # Now invoke our M-mode trap handler
+  # Also avoid writing into the user's stack or whomever messed with us here
+  csrr a0, mepc
+  csrr a1, mtval
+  csrr a2, mcause
+  csrr a3, mhartid
+  csrr a4, mstatus
+  mv a5, t5 # t5 still contains copy of mscratch
+  ld sp, 520(a5) # sizeof(struct trap_frame) == 520
+  call m_mode_trap_handler
+
+  # m_mode_trap_handler returns the PC value via a0
+  csrw mepc, a0
+
+  # Restore registers and return
+  # This is more straightforward, since we can overwrite t6=x31 at the end
+  csrr t6, mscratch
+  .set i, 1
+  .rept 31
+    load_gp %i
+    .set i, i + 1
+  .endr
+
+  # Continue execution at the given PC value
+  mret

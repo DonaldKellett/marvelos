@@ -1,7 +1,7 @@
 # Build
 CC=riscv64-elf-gcc
 CFLAGS=-ffreestanding -nostartfiles -nostdlib -nodefaultlibs
-CFLAGS+=-g -Wl,--gc-sections -mcmodel=medany
+CFLAGS+=-g -Wl,--gc-sections -mcmodel=medany -march=rv64g
 RUNTIME=src/asm/crt0.s
 LINKER_SCRIPT=src/lds/riscv64-virt.ld
 KERNEL_IMAGE=kmain
@@ -15,7 +15,7 @@ RUN+=-bios none -kernel $(KERNEL_IMAGE)
 # Format
 INDENT_FLAGS=-linux -brf -i2
 
-all: uart syscon common mm kmain
+all: uart syscon common mm plic kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
 uart:
@@ -31,6 +31,11 @@ mm:
 	$(CC) -c src/mm/page.c $(CFLAGS) -o page.o
 	$(CC) -c src/mm/sv39.c $(CFLAGS) -o sv39.o
 	$(CC) -c src/mm/kmem.c $(CFLAGS) -o kmem.o
+
+plic:
+	$(CC) -c src/plic/trap_frame.c $(CFLAGS) -o trap_frame.o
+	$(CC) -c src/plic/cpu.c $(CFLAGS) -o cpu.o
+	$(CC) -c src/plic/trap_handler.c $(CFLAGS) -o trap_handler.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o

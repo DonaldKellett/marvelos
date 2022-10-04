@@ -4,11 +4,8 @@
 #include "mm/page.h"
 #include "mm/sv39.h"
 #include "mm/kmem.h"
-
-// Define PLIC and CLINT here for now
-// We'll move them into separate header files when we get there
-#define PLIC_ADDR 0xc000000
-#define CLINT_ADDR 0x2000000
+#include "plic/trap_frame.h"
+#include "plic/cpu.h"
 
 extern const size_t INIT_START;
 extern const size_t INIT_END;
@@ -103,7 +100,7 @@ uint64_t kinit(void) {
   id_map_range(root, PLIC_ADDR + 0x200000, PLIC_ADDR + 0x208000, PTE_RW);
 
   // Map CLINT
-  map(root, CLINT_ADDR, CLINT_ADDR, PTE_RW, 0);
+  id_map_range(root, CLINT_ADDR, CLINT_ADDR + 0x10000, PTE_RW);
 
   print_page_allocations();
 
@@ -117,8 +114,34 @@ uint64_t kinit(void) {
   // Store the kernel table
   KERNEL_TABLE = (size_t)root;
 
+  // Initialize and store kernel trap frame
+  size_t satp = SATP_FROM(MODE_SV39, 0, (((size_t)root) >> PAGE_ORDER));
+  struct trap_frame *kernel_trap_frame = get_kernel_trap_frame();
+  SET_MSCRATCH(kernel_trap_frame);
+  SET_SSCRATCH(GET_MSCRATCH());
+  kernel_trap_frame->satp = satp;
+  void *trap_stack = alloc_page();
+  ASSERT(trap_stack != NULL, "kinit(): failed to allocate page for trap stack");
+  // Stack grows downwards from end of allocated page
+  kernel_trap_frame->trap_stack = &((uint8_t *) trap_stack)[PAGE_SIZE];
+  id_map_range(root, (size_t)trap_stack, (size_t)kernel_trap_frame->trap_stack,
+	       PTE_RW);
+  // Map the kernel trap frame
+  // Its address is now in the mscratch register
+  // Use this instead of kernel_trap_frame to avoid unnecessary type casts
+  id_map_range(root, GET_MSCRATCH(), GET_MSCRATCH() + sizeof(struct trap_frame),
+	       PTE_RW);
+
+  print_page_allocations();
+
+  // Let's check if the kernel trap stack is mapped correctly
+  vaddr = (size_t)kernel_trap_frame->trap_stack - 1;
+  paddr = virt_to_phys(root, vaddr);
+  ASSERT(paddr != 0x0, "kinit(): Failed to map kernel trap stack");
+  kprintf("vaddr = %p, paddr = %p\n", vaddr, paddr);
+
   kputs("Exiting M-mode\n");
-  return SATP_FROM(MODE_SV39, 0, ((size_t)root) >> PAGE_ORDER);
+  return satp;
 }
 
 void kmain(void) {
@@ -151,7 +174,15 @@ void kmain(void) {
 
   kmem_print_table();
 
-  kprintf("Goodbye!\n");
+  // Trigger a load page fault
+  kprintf("Let's try to read from the NULL pointer: %p\n", *(size_t *)NULL);
+
+  // Trigger a store page fault
+  kprintf("Now let's try to write to the NULL pointer!\n");
+  *(size_t *)NULL = 0xDEADBEEF;
+
+  // Trigger timer interrupt after 1 second
+  // set_timer_interrupt_delay_us(1 * US_PER_SECOND);
 
   poweroff();
 }
