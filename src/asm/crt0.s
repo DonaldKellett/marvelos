@@ -204,14 +204,28 @@ interrupt_handler:
   csrw mscratch, t5
 
   # Now invoke our M-mode trap handler
-  # Also avoid writing into the user's stack or whomever messed with us here
   csrr a0, mepc
   csrr a1, mtval
   csrr a2, mcause
   csrr a3, mhartid
   csrr a4, mstatus
   mv a5, t5 # t5 still contains copy of mscratch
-  ld sp, 520(a5) # sizeof(struct trap_frame) == 520
+  # Point to the kernel trap stack instead of the stack of
+  # whatever brought us here, so that we don't clobber the
+  # original stack
+  # In src/plic/trap_frame.h, we have:
+  # 
+  # - trap_frame.regs = trap_frame[255:0]
+  # - trap_frame.fregs = trap_frame[511:256]
+  # - trap_frame.satp = trap_frame[519:512]
+  # - trap_frame.trap_stack = trap_frame[527:520]
+  # - trap_frame.hartid = trap_frame[535:528]
+  # 
+  # for a total of 536 bytes
+  # So the field trap_frame.trap_stack containing the address
+  # of the top of our kernel trap stack is located 520 bytes
+  # away from the start of trap_frame
+  ld sp, 520(a5)
   call m_mode_trap_handler
 
   # m_mode_trap_handler returns the PC value via a0
