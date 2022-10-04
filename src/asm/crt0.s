@@ -134,8 +134,11 @@ prepare_s_mode:
 
   # Machine interrupt enable
   # Specifies which types of interrupts to enable in M-mode
-  #      external   timer      software
-  li t0, (1 << 9) | (1 << 5) | (1 << 1)
+  # MEIE = mie[11] (machine external interrupt)
+  # MTIE = mie[7] (machine timer interrupt)
+  # MSIE = mie[3] (machine software interrupt)
+  #      MEIE=1      MTIE=1     MSIE=1
+  li t0, (1 << 11) | (1 << 7) | (1 << 3)
   csrw mie, t0
   
   # Set machine trap vector to our interrupt_handler

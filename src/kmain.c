@@ -182,7 +182,5 @@ void kmain(void) {
   *(size_t *)NULL = 0xDEADBEEF;
 
   // Trigger timer interrupt after 1 second
-  // set_timer_interrupt_delay_us(1 * US_PER_SECOND);
-
-  poweroff();
+  set_timer_interrupt_delay_us(1 * US_PER_SECOND);
 }
