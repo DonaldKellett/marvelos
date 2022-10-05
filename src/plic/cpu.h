@@ -1,6 +1,12 @@
 #ifndef CPU_H
 #define CPU_H
 
+#define PLIC_ADDR 0xc000000
+#define CLINT_ADDR 0x2000000
+
+// Microseconds per second
+#define US_PER_SECOND 1000000ull
+
 // The QEMU clock frequency is 0x989680 (= 10 MHz) according to our
 // device tree
 #define TICKS_PER_SECOND 0x989680ull

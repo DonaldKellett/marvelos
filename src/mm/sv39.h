@@ -33,6 +33,9 @@
 #define PTE_IS_LEAF(entry) ((entry) & 0xE)
 #define PTE_IS_BRANCH(entry) (!PTE_IS_LEAF(entry))
 
+// Construct SATP from MODE, ASID and PPN fields
+#define SATP_FROM(mode, asid, ppn) (((size_t)(mode) << 60) | ((size_t)(asid) << 44) | ppn)
+
 // A page table is exactly 4096 / 8 = 512 64-bit entries
 #define PT_NUM_ENTRIES 512
 struct page_table {
