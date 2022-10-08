@@ -6,6 +6,7 @@
 #include "mm/kmem.h"
 #include "plic/trap_frame.h"
 #include "plic/cpu.h"
+#include "plic/plic.h"
 
 extern const size_t INIT_START;
 extern const size_t INIT_END;
@@ -45,7 +46,7 @@ void id_map_range(struct page_table *root, size_t start, size_t end,
 
 uint64_t kinit(void) {
   // Initialize core subsystems
-  uart_init(UART_ADDR);
+  uart_init();
   kputs("UART initialized");
   kputs("We are in M-mode!");
   page_init();
@@ -96,8 +97,7 @@ uint64_t kinit(void) {
   map(root, SYSCON_ADDR, SYSCON_ADDR, PTE_RW, 0);
 
   // Map PLIC
-  id_map_range(root, PLIC_ADDR, PLIC_ADDR + 0x2000, PTE_RW);
-  id_map_range(root, PLIC_ADDR + 0x200000, PLIC_ADDR + 0x208000, PTE_RW);
+  id_map_range(root, PLIC_ADDR, PLIC_ADDR + 0x210000, PTE_RW);
 
   // Map CLINT
   id_map_range(root, CLINT_ADDR, CLINT_ADDR + 0x10000, PTE_RW);
@@ -183,4 +183,11 @@ void kmain(void) {
 
   // Trigger timer interrupt after 1 second
   set_timer_interrupt_delay_us(1 * US_PER_SECOND);
+
+  // Echo writes to our UART
+  kprintf("Setting up interrupts and PLIC ...\n");
+  PLIC_SET_THRESHOLD(0);
+  PLIC_ENABLE(PLIC_UART);
+  PLIC_SET_PRIO(PLIC_UART, 1);
+  kprintf("UART interrupts have been enabled and are awaiting your command\n");
 }

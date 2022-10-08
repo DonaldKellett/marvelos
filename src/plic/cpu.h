@@ -1,7 +1,8 @@
 #ifndef CPU_H
 #define CPU_H
 
-#define PLIC_ADDR 0xc000000
+#include <stddef.h>
+
 #define CLINT_ADDR 0x2000000
 
 // Microseconds per second
@@ -39,6 +40,10 @@
 
 #define SET_SSCRATCH(sscratch) ({\
   asm volatile ("csrw sscratch, %0" :: "r"((size_t)(sscratch)));\
+})
+
+#define SET_MIE(mie) ({\
+  asm volatile ("csrw mie, %0" :: "r"((size_t)(mie)));\
 })
 
 void set_timer_interrupt_delay_us(size_t);

@@ -8,8 +8,8 @@
 /*
  * Initialize NS16550A UART
  */
-void uart_init(size_t base_addr) {
-  volatile uint8_t *ptr = (uint8_t *) base_addr;
+void uart_init(void) {
+  volatile uint8_t *ptr = (uint8_t *) UART_ADDR;
 
   // Set word length to 8 (LCR[1:0])
   const uint8_t LCR = 0b11;
@@ -38,12 +38,16 @@ void uart_init(size_t base_addr) {
   // ptr[3] = LCR;
 }
 
-static void uart_put(size_t base_addr, uint8_t c) {
-  *(uint8_t *) base_addr = c;
+static void uart_put(uint8_t c) {
+  *(uint8_t *) UART_ADDR = c;
+}
+
+uint8_t uart_get(void) {
+  return *(uint8_t *) UART_ADDR;
 }
 
 int kputchar(int character) {
-  uart_put(UART_ADDR, (uint8_t) character);
+  uart_put((uint8_t) character);
   return character;
 }
 

@@ -36,6 +36,7 @@ plic:
 	$(CC) -c src/plic/trap_frame.c $(CFLAGS) -o trap_frame.o
 	$(CC) -c src/plic/cpu.c $(CFLAGS) -o cpu.o
 	$(CC) -c src/plic/trap_handler.c $(CFLAGS) -o trap_handler.o
+	$(CC) -c src/plic/plic.c $(CFLAGS) -o plic.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o
