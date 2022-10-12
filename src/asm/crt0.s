@@ -63,6 +63,9 @@ KERNEL_STACK_START: .dword __kernel_stack_start
 .global KERNEL_STACK_END
 KERNEL_STACK_END: .dword __kernel_stack_end
 
+.global MAKE_SYSCALL
+MAKE_SYSCALL: .dword make_syscall
+
 .section .data
 .global KERNEL_TABLE
 KERNEL_TABLE: .dword 0
@@ -83,8 +86,8 @@ _start:
   csrw mstatus, t0
 
   # Machine exception program counter
-  # Set this to kinit so executing mret jumps to kinit
-  la t0, kinit
+  # Set this to kmain so executing mret jumps to kmain
+  la t0, kmain
   csrw mepc, t0
 
   # Do not allow interrupts in M-mode
@@ -110,71 +113,17 @@ __bss_zero_loop_end:
   la sp, __kernel_stack_end
   mv fp, sp
 
-  # prepare_s_mode is where we'll continue after kinit
-  la ra, prepare_s_mode
+  # If kmain returns, we're done with everything so halt forever
+  la ra, halt_forever
 
-  # Now jump to kinit for M-mode initialization
+  # Now jump to kmain for M-mode initialization
   mret
 
-prepare_s_mode:
-  # Initialize CSRs for S-mode
-
-  # Supervisor status
-  # MPP: protection mode (MPP=01 means S-mode)
-  # MPIE: machine interrupt-enable
-  # SPIE: supervisor interrupt-enable
-  #      MPP=01         MPIE=1     SPIE=1
-  li t0, (0b01 << 11) | (1 << 7) | (1 << 5)
-  csrw mstatus, t0
-
-  # Set machine exception program counter to kmain
-  # This is where mret will jump to
-  la t0, kmain
-  csrw mepc, t0
-
-  # Machine interrupt enable
-  # Specifies which types of interrupts to enable in M-mode
-  # MEIE = mie[11] (machine external interrupt)
-  # MTIE = mie[7] (machine timer interrupt)
-  # MSIE = mie[3] (machine software interrupt)
-  #      MEIE=1      MTIE=1     MSIE=1
-  li t0, (1 << 11) | (1 << 7) | (1 << 3)
-  csrw mie, t0
-  
-  # Set machine trap vector to our interrupt_handler
-  la t0, interrupt_handler
-  csrw mtvec, t0
-
-  # Use kinit return value as value of SATP register
-  csrw satp, a0
-
-  # Ensure our hart sees updated value of SATP after this point
-  sfence.vma
-
-  # Define PMP region to allow access to all physical memory in S-mode
-  # By default, M-mode can access all physical memory and
-  # no other modes can access any physical memory
-  # pmp0cfg = pmpcfg0[7:0]
-  #      A=TOR         X=1        W=1        R=1
-  li t0, (0b01 << 3) | (1 << 2) | (1 << 1) | (1 << 0)
-  csrw pmpcfg0, t0
-  # Set all 1's for the top address (exclusive)
-  # The bottom address (inclusive) is implicitly 0 when setting
-  # pmpcfg0 and pmpaddr0
-  li t0, -1
-  csrw pmpaddr0, t0
-
-  # If we ever return from kmain, just wait for interrupts indefinitely
-  la ra, wait_for_interrupt
-
-  # Now go to S-mode
-  # mret goes to S-mode since we set MPP=01 in mstatus
-  mret
-
-# We're already done with everything - let's hang
-wait_for_interrupt:
+# We're already done with everything - let's halt forever
+halt_forever:
+  csrw mie, zero
   wfi
-  j wait_for_interrupt
+  j halt_forever
 
 # Interrupt handler
 interrupt_handler:
@@ -245,3 +194,8 @@ interrupt_handler:
 
   # Continue execution at the given PC value
   mret
+
+.global make_syscall
+make_syscall:
+  ecall
+  ret
