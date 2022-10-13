@@ -15,7 +15,7 @@ RUN+=-bios none -kernel $(KERNEL_IMAGE)
 # Format
 INDENT_FLAGS=-linux -brf -i2
 
-all: uart syscon common mm plic kmain
+all: uart syscon common mm plic process kmain
 	$(CC) *.o $(RUNTIME) $(CFLAGS) -T $(LINKER_SCRIPT) -o $(KERNEL_IMAGE)
 
 uart:
@@ -37,6 +37,10 @@ plic:
 	$(CC) -c src/plic/cpu.c $(CFLAGS) -o cpu.o
 	$(CC) -c src/plic/trap_handler.c $(CFLAGS) -o trap_handler.o
 	$(CC) -c src/plic/plic.c $(CFLAGS) -o plic.o
+
+process:
+	$(CC) -c src/process/syscall.c $(CFLAGS) -o syscall.o
+	$(CC) -c src/process/process.c $(CFLAGS) -o process.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o

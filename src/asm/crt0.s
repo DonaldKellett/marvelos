@@ -199,3 +199,41 @@ interrupt_handler:
 make_syscall:
   ecall
   ret
+
+.global switch_to_user
+switch_to_user:
+  # a0 - frame address
+  csrw mscratch, a0
+  
+  # Set MPP=0 (U-mode), MPIE=1, SPIE=1
+  li t0, (0b00 << 11) | (1 << 7) | (1 << 5)
+  csrw mstatus, t0
+
+  # a1 - program counter
+  csrw mepc, a1
+
+  # a2 - SATP register
+  csrw satp, a2
+  
+  # Enable external, timer and software interrupts from
+  # M-mode and S-mode alike
+  li t0, 0xAAA
+  csrw mie, t0
+
+  # Set interrupt handler
+  la t0, interrupt_handler
+  csrw mtvec, t0
+
+  # Sync SATP for all address spaces, for all harts
+  sfence.vma
+
+  # Load process context frame
+  mv t6, a0
+  .set i, 1
+  .rept 31
+    load_gp %i, t6
+    .set i, i + 1
+  .endr
+
+  # Now jump to U-mode
+  mret
