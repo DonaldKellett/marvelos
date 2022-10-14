@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include "../plic/cpu.h"
+#include "../uart/uart.h"
 
 #define HALT() ({\
   SET_MIE(0);\

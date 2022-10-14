@@ -2,6 +2,7 @@
 CC=riscv64-elf-gcc
 CFLAGS=-ffreestanding -nostartfiles -nostdlib -nodefaultlibs
 CFLAGS+=-g -Wl,--gc-sections -mcmodel=medany -march=rv64g
+CFLAGS+=-Wl,--no-warn-rwx-segments
 RUNTIME=src/asm/crt0.s
 LINKER_SCRIPT=src/lds/riscv64-virt.ld
 KERNEL_IMAGE=kmain

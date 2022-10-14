@@ -162,22 +162,12 @@ interrupt_handler:
   csrr a3, mhartid
   csrr a4, mstatus
   mv a5, t5 # t5 still contains copy of mscratch
-  # Point to the kernel trap stack instead of the stack of
-  # whatever brought us here, so that we don't clobber the
-  # original stack
-  # In src/plic/trap_frame.h, we have:
-  # 
-  # - trap_frame.regs = trap_frame[255:0]
-  # - trap_frame.fregs = trap_frame[511:256]
-  # - trap_frame.satp = trap_frame[519:512]
-  # - trap_frame.trap_stack = trap_frame[527:520]
-  # - trap_frame.hartid = trap_frame[535:528]
-  # 
-  # for a total of 536 bytes
-  # So the field trap_frame.trap_stack containing the address
-  # of the top of our kernel trap stack is located 520 bytes
-  # away from the start of trap_frame
-  ld sp, 520(a5)
+  # Make sure we use the kernel stack as our trap stack
+  # instead of that of our user process
+  # Best practice is probably to allocate a page for
+  # dedicated use as the trap stack, but using the kernel
+  # stack directly seems to work for now
+  la sp, __kernel_stack_end
   call m_mode_trap_handler
 
   # m_mode_trap_handler returns the PC value via a0
@@ -226,6 +216,20 @@ switch_to_user:
 
   # Sync SATP for all address spaces, for all harts
   sfence.vma
+
+  # Define PMP region to allow (indirect) access to all
+  # physical memory in U-mode
+  # By default, M-mode can access all physical memory and
+  # no other modes can access any physical memory
+  # pmp0cfg = pmpcfg0[7:0]
+  #      A=TOR         X=1        W=1        R=1
+  li t0, (0b01 << 3) | (1 << 2) | (1 << 1) | (1 << 0)
+  csrw pmpcfg0, t0
+  # Set all 1's for the top address (exclusive)
+  # The bottom address (inclusive) is implicitly 0 when setting
+  # pmpcfg0 and pmpaddr0
+  li t0, -1
+  csrw pmpaddr0, t0
 
   # Load process context frame
   mv t6, a0

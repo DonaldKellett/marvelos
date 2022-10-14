@@ -7,6 +7,7 @@
 #include "plic/trap_frame.h"
 #include "plic/cpu.h"
 #include "plic/plic.h"
+#include "process/process.h"
 
 extern const size_t INIT_START;
 extern const size_t INIT_END;
@@ -49,11 +50,17 @@ void kmain(void) {
   uart_init();
   page_init();
   kmem_init();
-  kprintf("MAKE_SYSCALL = %p\n", MAKE_SYSCALL);
 
   PLIC_SET_THRESHOLD(0);
   PLIC_ENABLE(PLIC_UART);
   PLIC_SET_PRIO(PLIC_UART, 1);
 
-  poweroff();
+  kprintf("Starting our first process ...\n");
+  struct process *pid1 = create_process(init_process);
+  ASSERT(pid1 != NULL,
+	 "kmain(): failed to allocate structure for init process\n");
+  switch_to_user((size_t)pid1->frame, pid1->pc,
+		 SATP_FROM(MODE_SV39, pid1->pid,
+			   (size_t)pid1->root >> PAGE_ORDER));
+  PANIC("kmain(): failed to start our first process!\n");
 }
