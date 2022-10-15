@@ -42,6 +42,7 @@ plic:
 process:
 	$(CC) -c src/process/syscall.c $(CFLAGS) -o syscall.o
 	$(CC) -c src/process/process.c $(CFLAGS) -o process.o
+	$(CC) -c src/process/sched.c $(CFLAGS) -o sched.o
 
 kmain:
 	$(CC) -c src/kmain.c $(CFLAGS) -o kmain.o

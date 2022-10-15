@@ -8,6 +8,7 @@
 #include "plic/cpu.h"
 #include "plic/plic.h"
 #include "process/process.h"
+#include "process/sched.h"
 
 extern const size_t INIT_START;
 extern const size_t INIT_END;
@@ -55,12 +56,24 @@ void kmain(void) {
   PLIC_ENABLE(PLIC_UART);
   PLIC_SET_PRIO(PLIC_UART, 1);
 
+  kprintf("Initializing the process scheduler ...\n");
+  sched_init();
+
+  kprintf("Adding a second and third process to test our scheduler ...\n");
+  sched_enqueue(init_process);
+  sched_enqueue(init_process);
+
   kprintf("Starting our first process ...\n");
-  struct process *pid1 = create_process(init_process);
-  ASSERT(pid1 != NULL,
-	 "kmain(): failed to allocate structure for init process\n");
-  switch_to_user((size_t)pid1->frame, pid1->pc,
-		 SATP_FROM(MODE_SV39, pid1->pid,
-			   (size_t)pid1->root >> PAGE_ORDER));
+  struct process *process = sched_schedule();
+  ASSERT(process != NULL,
+	 "kmain(): process structure returned from scheduler was unexpectedly NULL\n");
+  kprintf("Our first process has PID = %d\n", process->pid);
+
+  kprintf("Issuing our first context switch timer ...\n");
+  set_timer_interrupt_delay_us(1 * US_PER_SECOND);
+
+  switch_to_user((size_t)process->frame, process->pc,
+		 SATP_FROM(MODE_SV39, process->pid,
+			   (size_t)process->root >> PAGE_ORDER));
   PANIC("kmain(): failed to start our first process!\n");
 }

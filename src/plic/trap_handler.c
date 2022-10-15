@@ -6,6 +6,10 @@
 #include "plic.h"
 #include "../syscon/syscon.h"
 #include "../process/syscall.h"
+#include "../process/sched.h"
+#include "../process/process.h"
+#include "../mm/sv39.h"
+#include "../mm/page.h"
 
 // Handle only the following interrupts for now:
 //
@@ -24,7 +28,17 @@ size_t m_mode_trap_handler(size_t epc, size_t tval, size_t cause, size_t hart,
     switch (exception_code) {
     case 7:
       // Timer interrupt
-      set_timer_interrupt_delay_us(1 * US_PER_SECOND);
+      {
+	set_timer_interrupt_delay_us(1 * US_PER_SECOND);
+	struct process *process = sched_schedule();
+	ASSERT(process != NULL,
+	       "m_mode_trap_handler(): unexpected got NULL when attempting to schedule next process\n");
+	kprintf("Context switch: scheduling next process with PID = %d\n",
+		process->pid);
+	switch_to_user((size_t)process->frame, process->pc,
+		       SATP_FROM(MODE_SV39, process->pid,
+				 (size_t)process->root >> PAGE_ORDER));
+      }
       break;
     case 11:
       // External interrupt (UART)
